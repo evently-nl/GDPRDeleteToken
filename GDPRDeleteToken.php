@@ -1,8 +1,8 @@
 <?php
-class LimeGDPR extends PluginBase {
+class GDPRDeleteToken extends PluginBase {
     protected $storage = 'DbStorage';    
     static protected $description = 'Allows you to add a link to invite/reminders so a user can view token data and delete it.';
-    static protected $name = 'LimeGDPR';
+    static protected $name = 'GDPR DeleteToken';
     
     // protected $hash;
     

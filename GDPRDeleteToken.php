@@ -114,10 +114,7 @@ class GDPRDeleteToken extends PluginBase {
     {
         if($this->get('bEnabled'))
         {
-            if (strpos(Yii::app()->request->requestUri, 'optout') !== false) {
-                $uriCorrect = true;
-            }
-
+            $uriCorrect = (strpos(Yii::app()->request->requestUri, 'optout') !== false) ? true : false;                
             if($this->get('bRedactOnOptpout')&&$uriCorrect)
             {
                 $model      = $this->event->get('model');
@@ -134,9 +131,17 @@ class GDPRDeleteToken extends PluginBase {
      */
     public function newDirectRequest()
     {   
+        $oEvent = $this->getEvent();
+        
+        if ($oEvent->get('target') != 'clearToken')
+        {
+            return;
+        }
+    
         if($this->get('bEnabled'))
         {
             try {
+                
             $oEvent = $this->getEvent();
             $action = $oEvent->get('function');
             //get the token and surveyId from the url    

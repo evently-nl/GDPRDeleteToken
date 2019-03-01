@@ -256,7 +256,7 @@ class GDPRDeleteToken extends PluginBase {
             <thead>
               <tr>
                 <th scope="col">First name</th>
-                <th scope="col">last name</th>
+                <th scope="col">Last name</th>
                 <th scope="col">Email</th>
                 <th scope="col">Token</th>
               </tr>

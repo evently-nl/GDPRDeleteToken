@@ -14,6 +14,8 @@ class GDPRDeleteToken extends PluginBase {
          * Here you should handle subscribing to the events your plugin will handle
          */
         $this->subscribe('beforeTokenSave', 'editToken');
+        $this->subscribe('beforeSurveySettings');
+        $this->subscribe('newSurveySettings');
         $this->subscribe('newDirectRequest');
         $this->subscribe('beforeTokenEmail');
     }
@@ -86,6 +88,45 @@ class GDPRDeleteToken extends PluginBase {
             'help'=>'E-mail address for people to contact regarding GDPR',
             )
     );
+
+    /**
+    * Add setting on survey level: send hook only for certain surveys / url setting per survey / auth code per survey / send user token / send question response
+    */
+    public function beforeSurveySettings()
+    {
+      $oEvent = $this->event;
+      $oEvent->set("surveysettings.{$this->id}", array(
+        'name' => get_class($this),
+        'settings' => array(
+          'bDeleteResponses' => array(
+            'type' => 'select',
+            'label' => 'Delete response on redacting',
+            'options'=>array(
+              0=> 'No (default)',
+              1=> 'Yes'
+            ),
+            'default'=>0,
+            'help'=>'If set to yes, whenever a user redacts his token data, all the responses belonging to that token will get deleted',
+            'current'=> $this->get('bDeleteResponses','Survey',$oEvent->get('survey')),
+          
+          )
+      ),
+    ));
+  }
+
+  /**
+      * Save the settings
+      */
+      public function newSurveySettings()
+    {
+        $event = $this->event;
+        foreach ($event->get('settings') as $name => $value)
+        {
+            /* In order use survey setting, if not set, use global, if not set use default */
+            $default=$event->get($name,null,null,isset($this->settings[$name]['default'])?$this->settings[$name]['default']:NULL);
+            $this->set($name, $value, 'Survey', $event->get('survey'),$default);
+        }
+    }
     
     /*
      * If the plugin is enabled, on every e-mail send the message will be checked 
@@ -167,7 +208,7 @@ class GDPRDeleteToken extends PluginBase {
                 }
                 if($action == 'remove')
                 {
-                    $this->remove($tokenObject);
+                    $this->remove($tokenObject, $token,$surveyId);
                 }
             }
             else
@@ -198,9 +239,16 @@ class GDPRDeleteToken extends PluginBase {
     /*
      * Remove token data and show confirmation
      */
-    protected function remove($tokenObject)
+    protected function remove($tokenObject, $token, $surveyId)
     {
         $this->redact($tokenObject, 'redacted');
+
+        $deleteResponse = $this->get('bDeleteResponses','Survey',$surveyId);
+        var_dump($deleteResponse);
+        if($deleteResponse){
+          $this->delete($surveyId, $token);
+        }
+        
         $email = $this->get('sEmail');
         $header = $this->get('sConfirmedHeader');
         $text = $this->get('sConfirmedText');
@@ -227,6 +275,20 @@ class GDPRDeleteToken extends PluginBase {
     }
 
     /*
+     * Delete the response
+     */
+    protected function delete($survey, $token)
+    {
+      $responses = $this->api->getResponses( $survey,  $attributes = array('token' => $token),  $condition = '',  $params = array());
+      $deleted= array();
+      foreach ($responses as $key => $response) {
+        $deleted[] = $this->api->removeResponse($survey,$response['id'] );  
+      }  
+    }
+    
+    
+    
+    /*
      * Redact the actual token
      */
     protected function redact($token, $emailStatus)
@@ -244,6 +306,8 @@ class GDPRDeleteToken extends PluginBase {
         $token['emailstatus'] = $emailStatus;
         $token->save();
     }
+
+    
 
     /*
      * Create the HTML for the confirm/overview page
@@ -304,7 +368,7 @@ class GDPRDeleteToken extends PluginBase {
             <h1>$header</h1>
             <p class='lead'>$text</p>
             $tokenHtml
-            <a href='$url' class='btn btn-danger' role='button'>$linkText</a>
+            <a id='confirmDelete' href='$url' class='btn btn-danger' role='button'>$linkText</a>
             
           </div>
     

@@ -2,7 +2,7 @@
 class GDPRDeleteToken extends PluginBase {
     protected $storage = 'DbStorage';    
     static protected $description = 'Allows you to add a link to invite/reminders so a user can view token data and delete it.';
-    static protected $name = 'GDPR DeleteToken';
+    static protected $name = 'Limesurvey GDPR plugin';
     
     // protected $hash;
     
@@ -244,7 +244,7 @@ class GDPRDeleteToken extends PluginBase {
         $this->redact($tokenObject, 'redacted');
 
         $deleteResponse = $this->get('bDeleteResponses','Survey',$surveyId);
-        var_dump($deleteResponse);
+
         if($deleteResponse){
           $this->delete($surveyId, $token);
         }

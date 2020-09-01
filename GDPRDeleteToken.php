@@ -140,10 +140,11 @@ class GDPRDeleteToken extends PluginBase {
         $survey = $this->event->get("survey");
         $token = $this->event->get('token');
         $secret = $this->get('sSecret');
+        $linkText = $this->get('sConfirmButton');
         $hash = $this->createHash($token['firstname'], $token['lastname'], $token['email'], $token['token'],$survey, $secret );
         $removeUrl = $this->createUrl('confirm', $survey, $token['token'], $hash); 
         $newBody = str_replace("@@@TOKENREMOVE@@@", $removeUrl, $body);
-        $newBody = str_replace("@@TOKENREMOVE@@", '<a href="' . $removeUrl . '">Remove</a>', $newBody);
+        $newBody = str_replace("@@TOKENREMOVE@@", '<a href="' . $removeUrl . '">'.$linkText.'</a>', $newBody);
         $this->event->set("body", $newBody);
         }
     }
